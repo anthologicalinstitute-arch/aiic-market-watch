@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIIC Market Watch & Quote Terminal™</title>
+  <style>
+    :root {
+      --bg-deep: #0a1628;
+      --bg-panel: #0d1f38;
+      --bg-header: #0b1a30;
+      --border: #1e3a5f;
+      --accent: #3b82f6;
+      --accent-dim: #1e40af;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --up: #22c55e;
+      --down: #ef4444;
+      --flat: #64748b;
+      --gold: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-deep);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      line-height: 1.4;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Top bar */
+    .top-bar {
+      background: linear-gradient(90deg, #0b1a30 0%, #0f2744 50%, #0b1a30 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+    }
+    .top-bar .title {
+      font-weight: 700;
+      color: #93c5fd;
+      text-transform: uppercase;
+    }
+    .top-bar .meta {
+      color: var(--text-dim);
+    }
+    .top-bar .live {
+      color: #4ade80;
+      font-weight: 600;
+    }
+
+    /* Control strip */
+    .control-strip {
+      display: flex;
+      gap: 10px;
+      padding: 8px 14px;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+    .badge {
+      background: #1e3a5f;
+      border: 1px solid #2563eb;
+      color: #93c5fd;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .btn {
+      background: #1e40af;
+      border: 1px solid #3b82f6;
+      color: #e0f2fe;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #2563eb; }
+    .btn-secondary {
+      background: #1e293b;
+      border-color: #475569;
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: #334155; }
+    .spacer { flex: 1; }
+
+    /* Main grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 12px 14px;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .panel-header {
+      background: #0f2744;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 12px;
+      color: #93c5fd;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-body {
+      padding: 12px;
+    }
+
+    /* Ask AIIC */
+    .ask-desc {
+      color: var(--text-dim);
+      font-size: 11px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .ask-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .ask-input {
+      flex: 1;
+      min-width: 200px;
+      background: #0a1628;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .ask-input::placeholder { color: #64748b; }
+    .file-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e293b;
+      border: 1px solid #475569;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      color: var(--text-dim);
+    }
+    .file-label input { display: none; }
+
+    /* Ledger search */
+    .ledger-desc {
+      color: var(--text-dim);
+      font-size: 11px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .ledger-row {
+      display: flex;
+      gap: 8px;
+    }
+    .ledger-input {
+      flex: 1;
+      background: #0a1628;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Tabs + filter */
+    .tabs-row {
+      display: flex;
+      gap: 0;
+      padding: 0 14px;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active {
+      color: #93c5fd;
+      border-bottom-color: #3b82f6;
+    }
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--bg-deep);
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-input {
+      background: #0a1628;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      width: 160px;
+    }
+    select.filter-select {
+      background: #0a1628;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Watchlist table */
+    .watchlist-section {
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 12px;
+    }
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th {
+      text-align: left;
+      padding: 7px 8px;
+      background: #0f2744;
+      color: #93c5fd;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #13253d;
+      white-space: nowrap;
+    }
+    tr:hover td { background: rgba(59, 130, 246, 0.06); }
+    .up { color: var(--up); }
+    .down { color: var(--down); }
+    .flat { color: var(--flat); }
+
+    /* Snapshot panel */
+    .snapshot-body {
+      padding: 12px;
+      min-height: 120px;
+    }
+    .snapshot-title {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .notional-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bar-label {
+      width: 48px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .bar-track {
+      flex: 1;
+      height: 14px;
+      background: #0a1628;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .bar-value {
+      width: 70px;
+      text-align: right;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Ticker track */
+    .ticker-section {
+      margin: 0 14px 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .ticker-header {
+      background: #0f2744;
+      padding: 6px 12px;
+      font-size: 11px;
+      color: #93c5fd;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    #da-ticker-track {
+      display: flex;
+      gap: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 8px 0;
+      background: #071020;
+    }
+    .tick-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      margin: 0 2px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: "Consolas", "Courier New", monospace;
+      border: 1px solid transparent;
+    }
+    .tick-up {
+      background: rgba(34, 197, 94, 0.12);
+      border-color: rgba(34, 197, 94, 0.3);
+      color: #4ade80;
+    }
+    .tick-dn {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+    .tick-flat {
+      background: rgba(100, 116, 139, 0.12);
+      border-color: rgba(100, 116, 139, 0.3);
+      color: #94a3b8;
+    }
+    .tick-sym { font-weight: 700; }
+    .tick-price { color: #e2e8f0; }
+    .tick-held { color: var(--gold); font-size: 10px; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 10px;
+      font-size: 11px;
+      color: #64748b;
+      border-top: 1px solid var(--border);
+      background: var(--bg-header);
+    }
+
+    /* Studio Media button */
+    .studio-btn {
+      margin: 8px 14px 0;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top branding bar -->
+  <div class="top-bar">
+    <div class="title">AIIC MARKET WATCH &amp; QUOTE TERMINAL™ — PROPRIETARY · AIIC™ · 7x7AIIR001b</div>
+    <div class="meta">
+      <span class="live">LIVE CST: <span id="live-clock">--:--:--</span></span>
+      &nbsp;·&nbsp; DAY <span id="day-count">1,722</span>
+      &nbsp;·&nbsp; PROPRIETARY · AIIC™ · 7x7AIIR001b
+    </div>
+  </div>
+
+  <!-- Control strip -->
+  <div class="control-strip">
+    <span class="badge" id="delta-status">DELTA TAPE · INITIALIZING...</span>
+    <div class="spacer"></div>
+    <button class="btn" id="pause-tape-btn" onclick="toggleTape()">Pause Tape</button>
+  </div>
+
+  <!-- Main two-column panels -->
+  <div class="main-grid">
+    <!-- Ask AIIC -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Ask AIIC™ · Multi-Source Synthesis, Follow-Up Memory &amp; Local Telemetry</span>
+      </div>
+      <div class="panel-body">
+        <p class="ask-desc">
+          Queries local ledger telemetry plus parallel Wikipedia (Top-3 hits), Wikidata entities, and DuckDuckGo RelatedTopics with pronoun follow-up resolution and provenance tags.
+        </p>
+        <div class="ask-row">
+          <input type="text" class="ask-input" id="ask-input"
+                 placeholder="Ask AIIC™ (e.g. Bush family, institutional holders of TSLA, my TSLA position)...">
+          <button class="btn" onclick="askAIIC()">Ask AIIC™</button>
+          <button class="btn btn-secondary" onclick="clearAsk()">Clear</button>
+          <label class="file-label">
+            Choose File
+            <input type="file" id="ask-file" onchange="handleFile(this)">
+            <span id="file-name">No file chosen</span>
+          </label>
+        </div>
+        <div id="ask-response" style="margin-top:8px;color:var(--text-dim);font-size:12px;min-height:20px;"></div>
+      </div>
+    </div>
+
+    <!-- Search the ledger -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Search the ledger · ARA Ledger &amp; Context Boundary</span>
+      </div>
+      <div class="panel-body">
+        <p class="ledger-desc">
+          Search the ledger (ARA Ledger New Tab / Bing / Copilot bar in Screenshot (991).jpg): Operates with search-session and browser/location context (such as your San Antonio, TX region, 56° weather/market cards, and Edge profile/Copilot integration) rather than your private local PowerShell/DuckDB/HTML state. In this terminal, entering a ticker/sleeve filters the ledger locally while full questions route to Ask AIIC™ without corrupting the watchlist filter.
+        </p>
+        <div class="ledger-row">
+          <input type="text" class="ledger-input" id="ledger-input"
+                 placeholder="Filter ledger by ticker/sleeve OR ask a full question...">
+          <button class="btn" onclick="searchLedger()">Search the ledger</button>
+        </div>
+        <div id="ledger-response" style="margin-top:8px;color:var(--text-dim);font-size:12px;min-height:20px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Studio Media shortcut -->
+  <div class="studio-btn">
+    <button class="btn btn-secondary" onclick="alert('Studio Media / 4-Panel / GIF — placeholder for media workspace.')">
+      + Studio Media / 4-Panel / GIF
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-row">
+    <button class="tab active" data-tab="equity" onclick="switchTab(this)">Equity &amp; Sleeve Ledger</button>
+    <button class="tab" data-tab="digital" onclick="switchTab(this)">Live Digital Assets</button>
+  </div>
+
+  <!-- Filter controls -->
+  <div class="filter-row">
+    <input type="text" class="filter-input" id="filter-input" placeholder="Filter ticker or sleeve (e.g. A...)"
+           oninput="applyFilter()">
+    <select class="filter-select" id="sleeve-filter" onchange="applyFilter()">
+      <option value="all">All Sleeves</option>
+      <option value="Core">Core</option>
+      <option value="Growth">Growth</option>
+      <option value="Hedge">Hedge</option>
+      <option value="Spec">Spec</option>
+    </select>
+    <button class="btn btn-secondary" onclick="resetFilter()">Reset Filter</button>
+  </div>
+
+  <!-- Watchlist + Snapshot -->
+  <div class="watchlist-section">
+    <div class="panel">
+      <div class="panel-header">
+        <span>PROPRIETARY AIIC™ WATCHLIST &amp; QUOTE LEDGER</span>
+      </div>
+      <div class="table-wrap">
+        <table id="watchlist-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Sleeve</th>
+              <th>Value ($)</th>
+              <th>Delta ($ / %)</th>
+              <th>Weight %</th>
+              <th>TP (+7.5%)</th>
+              <th>SL (−3.5%)</th>
+            </tr>
+          </thead>
+          <tbody id="watchlist-body">
+            <!-- populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span>SELECTED QUOTE SNAPSHOT</span>
+      </div>
+      <div class="snapshot-body">
+        <div class="snapshot-title">TOP POSITION NOTIONAL BARS</div>
+        <div class="notional-bars" id="notional-bars">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live ticker track -->
+  <div class="ticker-section">
+    <div class="ticker-header">DELTA TAPE · LIVE TICKER TRACK</div>
+    <div id="da-ticker-track">
+      <!-- chips injected by JS -->
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    © 2026 AIResearch Institute | PROPRIETARY · AIIC™ · 7x7AIIR001b — All Rights Reserved · Workstation Alpha (DESKTOP-0RTAAHH)
+  </div>
+
+  <script>
+    /* =========================================================
+       AIIC Market Watch – Corrected Core Logic
+       Fixes applied:
+       - All JS properly inside <script>; no source leakage to DOM
+       - Clean template-literal HTML generation (no broken concat)
+       - Ticker chips built once then duplicated only for seamless scroll
+       - Safe null checks, consistent formatting helpers
+       - TP/SL logic centralized and readable
+       ========================================================= */
+
+    // ---- Mock universe & positions (replace with live feed later) ----
+    const DA_UNIVERSE = [
+      { sym: "TSLA", price: 248.42, chg: 1.87, sleeve: "Growth", value: 124210, weight: 18.4 },
+      { sym: "NVDA", price: 148.75, chg: 2.34, sleeve: "Growth", value: 89250,  weight: 13.2 },
+      { sym: "AAPL", price: 228.10, chg: -0.42, sleeve: "Core",   value: 68430,  weight: 10.1 },
+      { sym: "MSFT", price: 415.60, chg: 0.88, sleeve: "Core",   value: 62340,  weight: 9.2  },
+      { sym: "AMD",  price: 162.30, chg: -1.15, sleeve: "Spec",   value: 32460,  weight: 4.8  },
+      { sym: "META", price: 582.15, chg: 0.55, sleeve: "Growth", value: 46572,  weight: 6.9  },
+      { sym: "GOOGL",price: 176.80, chg: -0.22, sleeve: "Core",   value: 35360,  weight: 5.2  },
+      { sym: "AMZN", price: 198.45, chg: 1.12, sleeve: "Core",   value: 39690,  weight: 5.9  },
+      { sym: "SPY",  price: 582.30, chg: 0.31, sleeve: "Hedge",  value: 58230,  weight: 8.6  },
+      { sym: "QQQ",  price: 512.80, chg: 0.67, sleeve: "Hedge",  value: 25640,  weight: 3.8  },
+      { sym: "COIN", price: 248.90, chg: -2.45, sleeve: "Spec",   value: 12445,  weight: 1.8  },
+      { sym: "PLTR", price: 62.40,  chg: 3.21, sleeve: "Spec",   value: 18720,  weight: 2.8  }
+    ];
+
+    // Held notional amounts (symbol → dollars). 0 = not held.
+    const HELD = {
+      TSLA: 124210,
+      NVDA: 89250,
+      AAPL: 68430,
+      MSFT: 62340,
+      META: 46572,
+      SPY:  58230,
+      PLTR: 18720
+    };
+
+    // ---- Helpers ----
+    function fmtUSD(n) {
+      if (n == null || isNaN(n)) return "—";
+      return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtPct(n, showSign = true) {
+      if (n == null || isNaN(n)) return "—";
+      const sign = showSign && n > 0 ? "+" : "";
+      return sign + Number(n).toFixed(2) + "%";
+    }
+
+    function heldAmt(sym) {
+      return HELD[sym] || 0;
+    }
+
+    function isHeld(sym) {
+      return heldAmt(sym) > 0;
+    }
+
+    // Centralized TP / SL text (matches original intent)
+    function tpSlText(sym, posValue) {
+      const held = isHeld(sym);
+      const tp = held
+        ? "+$" + (posValue * 0.075).toFixed(2)
+        : "+7.5% (Ref)";
+      const sl = held
+        ? "-$" + (posValue * 0.035).toFixed(2)
+        : "-3.5% (Ref)";
+      return { tp, sl };
+    }
+
+    // ---- Clock ----
+    function updateClock() {
+      const now = new Date();
+      // Approximate CST (UTC-6). For production use a proper TZ library.
+      const cst = new Date(now.toLocaleString("en-US", { timeZone: "America/Chicago" }));
+      const h = String(cst.getHours()).padStart(2, "0");
+      const m = String(cst.getMinutes()).padStart(2, "0");
+      const s = String(cst.getSeconds()).padStart(2, "0");
+      document.getElementById("live-clock").textContent = `${h}:${m}:${s} AM`;
+    }
+
+    // ---- Watchlist table ----
+    function renderWatchlist(filterText = "", sleeve = "all") {
+      const tbody = document.getElementById("watchlist-body");
+      const q = filterText.trim().toLowerCase();
+
+      const rows = DA_UNIVERSE.filter(r => {
+        const matchText = !q || r.sym.toLowerCase().includes(q) || r.sleeve.toLowerCase().includes(q);
+        const matchSleeve = sleeve === "all" || r.sleeve === sleeve;
+        return matchText && matchSleeve;
+      });
+
+      tbody.innerHTML = rows.map(r => {
+        const deltaCls = r.chg > 0 ? "up" : (r.chg < 0 ? "down" : "flat");
+        const deltaStr = fmtUSD(r.value * (r.chg / 100)) + " / " + fmtPct(r.chg);
+        const { tp, sl } = tpSlText(r.sym, r.value);
+
+        return `<tr>
+          <td><strong>${r.sym}</strong></td>
+          <td>${r.sleeve}</td>
+          <td>${fmtUSD(r.value)}</td>
+          <td class="${deltaCls}">${deltaStr}</td>
+          <td>${r.weight.toFixed(1)}%</td>
+          <td class="up">${tp}</td>
+          <td class="down">${sl}</td>
+        </tr>`;
+      }).join("");
+
+      renderNotionalBars(rows.slice(0, 6));
+    }
+
+    // ---- Notional bars ----
+    function renderNotionalBars(rows) {
+      const container = document.getElementById("notional-bars");
+      if (!rows.length) {
+        container.innerHTML = "<div style='color:var(--text-dim)'>No positions match filter.</div>";
+        return;
+      }
+      const maxVal = Math.max(...rows.map(r => r.value));
+
+      container.innerHTML = rows.map(r => {
+        const pct = (r.value / maxVal) * 100;
+        const color = r.chg >= 0 ? "var(--up)" : "var(--down)";
+        return `<div class="bar-row">
+          <div class="bar-label">${r.sym}</div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <div class="bar-value">${fmtUSD(r.value)}</div>
+        </div>`;
+      }).join("");
+    }
+
+    // ---- Ticker track (fixed) ----
+    function renderTickerTrack() {
+      const track = document.getElementById("da-ticker-track");
+      if (!track) return;
+
+      const chips = DA_UNIVERSE.map(r => {
+        const cls = r.chg > 0 ? "tick-up" : (r.chg < 0 ? "tick-dn" : "tick-flat");
+        const p = heldAmt(r.sym);
+        const heldHtml = p > 0
+          ? `<span class="tick-held">($${p.toFixed(0)})</span>`
+          : "";
+
+        return `<span class="tick-chip ${cls}">
+          <span class="tick-sym">${r.sym}</span>
+          <span class="tick-price">${fmtUSD(r.price)}</span>
+          <span>${fmtPct(r.chg)}</span>
+          ${heldHtml}
+        </span>`;
+      }).join("");
+
+      // Duplicate once for seamless horizontal scroll effect
+      track.innerHTML = chips + chips;
+    }
+
+    // ---- Filter handlers ----
+    function applyFilter() {
+      const text = document.getElementById("filter-input").value;
+      const sleeve = document.getElementById("sleeve-filter").value;
+      renderWatchlist(text, sleeve);
+    }
+
+    function resetFilter() {
+      document.getElementById("filter-input").value = "";
+      document.getElementById("sleeve-filter").value = "all";
+      renderWatchlist();
+    }
+
+    // ---- Tab switch ----
+    function switchTab(btn) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      btn.classList.add("active");
+      // Placeholder – in a full version you would swap data sources here
+      const tab = btn.dataset.tab;
+      document.getElementById("ask-response").textContent =
+        tab === "digital" ? "Switched to Live Digital Assets view (mock)." : "Switched to Equity & Sleeve Ledger view.";
+    }
+
+    // ---- Ask AIIC / Ledger (stubs) ----
+    function askAIIC() {
+      const q = document.getElementById("ask-input").value.trim();
+      const resp = document.getElementById("ask-response");
+      if (!q) {
+        resp.textContent = "Enter a question or entity to query.";
+        return;
+      }
+      resp.innerHTML = `<strong>AIIC™ synthesis</strong> (mock): Multi-source result for “${q}” — local ledger + external knowledge graph would appear here with provenance tags.`;
+    }
+
+    function clearAsk() {
+      document.getElementById("ask-input").value = "";
+      document.getElementById("ask-response").textContent = "";
+      document.getElementById("file-name").textContent = "No file chosen";
+      document.getElementById("ask-file").value = "";
+    }
+
+    function handleFile(input) {
+      const name = input.files[0] ? input.files[0].name : "No file chosen";
+      document.getElementById("file-name").textContent = name;
+    }
+
+    function searchLedger() {
+      const q = document.getElementById("ledger-input").value.trim();
+      const resp = document.getElementById("ledger-response");
+      if (!q) {
+        resp.textContent = "Enter a ticker, sleeve, or full question.";
+        return;
+      }
+      // Simple local filter simulation
+      if (q.length <= 6 && /^[A-Za-z.]+$/.test(q)) {
+        document.getElementById("filter-input").value = q;
+        applyFilter();
+        resp.textContent = `Local ledger filter applied for “${q}”.`;
+      } else {
+        resp.innerHTML = `Full question routed to Ask AIIC™ (mock): “${q}”`;
+      }
+    }
+
+    // ---- Tape control ----
+    let tapeRunning = true;
+    function toggleTape() {
+      tapeRunning = !tapeRunning;
+      const btn = document.getElementById("pause-tape-btn");
+      const status = document.getElementById("delta-status");
+      if (tapeRunning) {
+        btn.textContent = "Pause Tape";
+        status.textContent = "DELTA TAPE · LIVE";
+        status.style.borderColor = "#22c55e";
+      } else {
+        btn.textContent = "Resume Tape";
+        status.textContent = "DELTA TAPE · PAUSED";
+        status.style.borderColor = "#f59e0b";
+      }
+    }
+
+    // ---- Init ----
+    function init() {
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      renderWatchlist();
+      renderTickerTrack();
+
+      // Simulate tape becoming live after a short delay
+      setTimeout(() => {
+        if (tapeRunning) {
+          document.getElementById("delta-status").textContent = "DELTA TAPE · LIVE";
+          document.getElementById("delta-status").style.borderColor = "#22c55e";
+        }
+      }, 1800);
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
